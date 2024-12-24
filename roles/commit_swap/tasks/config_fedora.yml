@@ -1,0 +1,9 @@
+---
+# tasks file for commit_swap
+- name: touch file
+  file:
+    path: /etc/systemd/zram-generator.conf
+    state: touch 
+
+- name: swapoff
+  shell: swapoff -a

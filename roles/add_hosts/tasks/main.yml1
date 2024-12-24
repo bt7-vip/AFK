@@ -1,0 +1,25 @@
+---
+# tasks file for add_hosts
+- name: 读取当前的/etc/hosts文件
+  command: cat /etc/hosts
+  register: current_hosts_content
+  changed_when: false 
+
+- name: 添加多个字段到/etc/hosts/文件
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item }}"
+    state: present
+    insertafter: EOF
+  with_items: "{{ add_hosts }}"
+
+- name: 检查是否存在重复项
+  shell: "sort /etc/hosts | uniq -d"
+  register: duplicate_entries
+  changed_when: false 
+  ignore_errors: yes
+
+- name: 输出重复项
+  debug: 
+    var: duplicate_entries.stdout_lines
+  when: duplicate_entries == 0

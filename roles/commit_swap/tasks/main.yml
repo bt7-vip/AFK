@@ -1,0 +1,12 @@
+---
+# tasks file for commit_swap
+- name: include config_centos.yml
+  include_tasks: config_centos.yml
+  when: (ansible_distribution == 'Centos')
+    or
+    (ansible_distribution == 'Rocky')
+
+- name: include config_fedora.yml
+  include_tasks: config_fedora.yml
+  when:
+  - ansible_distribution == 'Fedora'

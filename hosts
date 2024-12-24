@@ -1,0 +1,14 @@
+[node]
+192.168.3.124 hostname=k8s-1
+192.168.3.125 hostname=k8s-2
+[master]
+192.168.3.123 hostname=k8s-master
+[var:children]
+node
+master
+[all:vars]
+ansible_user=USRE
+ansible_password=USER_PASSWD
+ansible_become_user=root
+ansible_become_password=ROOT_PASSWD
+ansible_become_method=su

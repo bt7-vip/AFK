@@ -1,0 +1,4 @@
+---
+# vars file for remove_hosts
+remove_hosts:
+  - 8.8.8.8 x.com

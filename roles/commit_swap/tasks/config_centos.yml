@@ -1,0 +1,11 @@
+---
+# tasks file for commit_swap
+- name: 注释文本
+  lineinfile:
+    path: /etc/fstab
+    regexp: '^(?!#).*swap.*$'
+    line: '#\g<0>'
+    backrefs: yes
+- name: swapoff
+  shell: swapoff -a
+  when: ansible_swaptotal_mb > 0

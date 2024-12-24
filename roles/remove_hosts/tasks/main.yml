@@ -1,0 +1,12 @@
+---
+# tasks file for remove_hosts
+- name: remove host to /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^{{ item }}'
+    state: absent
+  with_items: "{{ remove_hosts }}"
+#  register: result
+
+#- debug:
+#    var: result

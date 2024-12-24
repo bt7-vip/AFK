@@ -27,6 +27,7 @@ ansible_become_method=su
 ```
 
 ###### 2: 准备代理
+*** if you don't need proxy, go "开始运行"***
 
 这个环境可以在内网部署，联网部分使用代理链接到互联网
 1：socks代理
@@ -41,7 +42,10 @@ ansible-ploybook --syntax-check commit_swaap.yml
 ```
 开始执行部署
 ```shell
+# use proxy
 ansible-playbook commit_swap.yml
+# no proxy
+ansible-playbook commit_internet.yml
 ```
 
 

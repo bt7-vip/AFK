@@ -27,7 +27,7 @@ ansible_become_method=su
 ```
 
 ###### 2: 准备代理
-*** if you don't need proxy, go "开始运行"***
+*** if you don't need proxy, go "安装ansible和模块"***
 
 这个环境可以在内网部署，联网部分使用代理链接到互联网
 1：socks代理
@@ -44,13 +44,14 @@ sudo dnf install rhel-system-roles
 ansible-galaxy collection install community.crypto
 ```
 
-###### 4： 开始运行剧本
+###### 4：检测剧本
 
   如果想要检测一下剧本文件是否存在明显语法错误，可以执行检测
 ```shell
 ansible-ploybook --syntax-check commit_swaap.yml
 ```
-开始执行部署
+###### 5：开始执行部署
+
 ```shell
 # use proxy
 ansible-playbook commit_swap.yml

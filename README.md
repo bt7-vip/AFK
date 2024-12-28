@@ -34,7 +34,17 @@ ansible_become_method=su
 2：http代理
 如果网络链接状良好，可以取消这一部分
 
-###### 3： 开始运行
+###### 3： 安装ansible和模块
+
+```shell
+# 安装ansible
+sudo dnf install ansible -y 
+# 安装角色
+sudo dnf install rhel-system-roles
+ansible-galaxy collection install community.crypto
+```
+
+###### 4： 开始运行剧本
 
   如果想要检测一下剧本文件是否存在明显语法错误，可以执行检测
 ```shell

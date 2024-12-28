@@ -38,7 +38,7 @@
         mode: '0700'
 
     - name: Generate SSh key pair
-      openssh_keypair:
+      community.crypto.openssh_keypair:
         path: /root/.ssh/id_rsa
         type: rsa
         size: 4096

@@ -3,7 +3,6 @@
   hosts: master,node
   become: yes
   vars:
-    # NTP服务变量
     timesync_net_services:
       - hostname: pool.ntp.org
         iburst: true
@@ -15,11 +14,8 @@
     crictl: v1.34.0
     # 设置构架
     architecture: amd64
-    # 设置代理变量
-    proxy_type: "socks5"
-    proxy_host: "exampdaemon"
-    proxy_port: "10810"
-    proxy_url: "{{ proxy_type }}://{{ proxy_host }}:{{ proxy_port }}"
+    # 设置web代理
+    proxy_url: http://192.168.3.190:10911
 
   roles:
     - role: commit_swap
@@ -42,29 +38,32 @@
         path: /root/.ssh
         state: directory
         mode: '0700'
-    - block: # 配置免密
-      - name: Generate SSh key pair
-        community.crypto.openssh_keypair:
-          path: /root/.ssh/id_rsa
-          type: rsa
-          size: 4096
-          state: present
-        register: ssh_key
 
-      - name: add ssh keyecdsa public
-        template:
-          src: known_hosts.j2
-          dest: /root/.ssh/known_hosts
-          mode: "0600"
-          backup: yes
+    - name: Generate SSh key pair
+      community.crypto.openssh_keypair:
+        path: /root/.ssh/id_rsa
+        type: rsa
+        size: 4096
+        state: present
+      register: ssh_key
+      when: '"master" in group_names'
 
-      - name: 获取公钥
-        shell: cat /root/.ssh/id_rsa.pub
-        register: master_pubkey
+    - name: add ssh keyecdsa public
+      template:
+        src: known_hosts.j2
+        dest: /root/.ssh/known_hosts
+        mode: "0600"
+        backup: yes
+      when: "'master' in group_names"
 
-      - name: 将公钥保存到变量
-        set_fact:
-            master_pubkey_content: "{{ master_pubkey.stdout }}"
+    - name: 获取公钥
+      shell: cat /root/.ssh/id_rsa.pub
+      register: master_pubkey
+      when: "'master' in group_names"
+
+    - name: 将公钥保存到变量
+      set_fact:
+          master_pubkey_content: "{{ master_pubkey.stdout }}"
       when: "'master' in group_names"
 
     - name: 在node组生成authorized_keys文件
@@ -132,7 +131,7 @@
       lineinfile:
         path: /etc/proxychains.conf
         regexp: '^socks4'
-        line: "{{ proxy_type }} {{ proxy_host }} {{ proxy_port }}"
+        line: 'socks5 192.168.3.190 10910'
 
     - name: 添加内核参数
       lineinfile:
@@ -178,10 +177,10 @@
     - name: 重载配置
       shell: sysctl -p /etc/sysctl.d/99-kubernetes-cri.conf
 
-    - name: 下载containerd，runc，crictl软件包
+    - name: download packages
       get_url:
         url: "{{ item }}"
-        dest: /tmp/ 
+        dest: /tmp 
         use_proxy: true
       environment: 
         http_proxy: "{{ proxy_url }}"
@@ -191,7 +190,7 @@
         - 'https://github.com/opencontainers/runc/releases/download/{{ runc }}/runc.{{ architecture }}'
         - 'https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl }}/crictl-{{ crictl }}-linux-{{ architecture }}.tar.gz'
 
-    - name: 解压和安装containerd
+    - name: 解压和安装软件
       unarchive:
         src: /tmp/containerd-{{ containerd }}-linux-{{ architecture }}.tar.gz
         dest: /usr/local
@@ -216,7 +215,7 @@
         - /usr/local/bin/containerd config default > /etc/containerd/config.toml
         - sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
-    - name: 下载containerd systemd tages
+    - name: 下载systemd tages
       get_url:
         url: https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
         dest: /etc/systemd/system
@@ -226,15 +225,14 @@
         https_proxy: "{{ proxy_url }}"
 
     # 为containerd配置代理
-    - name: 创建containerd配置文件夹
-      file: 
+    - name: 创建文件夹
+      file:
         path: /etc/systemd/system/containerd.service.d
         state: directory
         owner: root
         group: root
         mode: 0755
-
-    - name: 复制配置文件到节点
+    - name: 复制文件到节点
       copy:
         src: http-proxy.conf
         dest: /etc/systemd/system/containerd.service.d/
@@ -268,7 +266,7 @@
     - name: 下kube-flannel文件
       get_url:
         url: https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-        dest: /tmp/
+        dest: /root/
         use_proxy: true
       environment:
         http_proxy: "{{ proxy_url }}"

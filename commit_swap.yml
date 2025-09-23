@@ -253,7 +253,7 @@
     # 安装版本在repo中指定，指定那版本后续安装就是那个版本。
     - name: copy k8s repo to /etc/yum.repos.d/
       copy:
-        src: k8s.repoi.j2
+        src: k8s.repo.j2
         dest: /etc/yum.repos.d/k8s.repo
       
     - name: 下载k8s软件包

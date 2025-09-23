@@ -9,9 +9,10 @@
       - hostname: ntp.aliyun.com
         iburst: true
     #软件版本，注意containerd的不带v
-    runc: v1.2.0-rc.3
-    containerd: 1.7.14
-    crictl: v1.31.1
+    runc: v1.3.1
+    containerd: 2.1.4
+    crictl: v1.34.0
+    k8s_version: 1.34
     # 设置构架
     architecture: amd64
 
@@ -36,32 +37,29 @@
         path: /root/.ssh
         state: directory
         mode: '0700'
+    - block: # 配置免密 
+      - name: Generate SSh key pair
+        community.crypto.openssh_keypair:
+          path: /root/.ssh/id_rsa
+          type: rsa
+          size: 4096
+          state: present
+        register: ssh_key
 
-    - name: Generate SSh key pair
-      community.crypto.openssh_keypair:
-        path: /root/.ssh/id_rsa
-        type: rsa
-        size: 4096
-        state: present
-      register: ssh_key
-      when: '"master" in group_names'
+      - name: add ssh keyecdsa public
+        template:
+          src: known_hosts.j2
+          dest: /root/.ssh/known_hosts
+          mode: "0600"
+          backup: yes
 
-    - name: add ssh keyecdsa public
-      template:
-        src: known_hosts.j2
-        dest: /root/.ssh/known_hosts
-        mode: "0600"
-        backup: yes
-      when: "'master' in group_names"
+      - name: 获取公钥
+        shell: cat /root/.ssh/id_rsa.pub
+        register: master_pubkey
 
-    - name: 获取公钥
-      shell: cat /root/.ssh/id_rsa.pub
-      register: master_pubkey
-      when: "'master' in group_names"
-
-    - name: 将公钥保存到变量
-      set_fact:
-          master_pubkey_content: "{{ master_pubkey.stdout }}"
+      - name: 将公钥保存到变量
+        set_fact:
+            master_pubkey_content: "{{ master_pubkey.stdout }}"
       when: "'master' in group_names"
 
     - name: 在node组生成authorized_keys文件
@@ -118,7 +116,8 @@
         state: latest
       with_items:
           - epel-release
-          - podman
+          - unzip
+          - tar
           - bash-completion
           - ipset
           - ipvsadm
@@ -200,7 +199,6 @@
         - mkdir -p /etc/containerd
         - /usr/local/bin/containerd config default > /etc/containerd/config.toml
         - sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
-        - sed -i 's,sandbox_image = "registry.k8s.io/pause:3.8",sandbox_image = "registry.aliyuncs.com/google_containers/pause:3.9",g' /etc/containerd/config.toml
 
     - name: 下载systemd tages
       get_url:
@@ -217,7 +215,7 @@
     # 安装版本在repo中指定，指定那版本后续安装就是那个版本。
     - name: copy k8s repo to /etc/yum.repos.d/
       copy:
-        src: k8s.repo
+        src: k8s.repo.j2
         dest: /etc/yum.repos.d/k8s.repo
       
     - name: install kubelet、kubeadm 、kubectl
@@ -228,13 +226,13 @@
       with_items:
         - kubelet
         - kubeadm
-        - kubectl']
+        - kubectl
       tags: install_package
 
     - name: 下kube-flannel文件
       get_url:
         url: https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-        dest: /root/
+        dest: /tmp/
       when: "'master' in group_names"
 
     - name: 添加kubectl、kubeadm自动补全

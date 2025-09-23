@@ -1,3 +1,0 @@
----
-# vars file for add_hosts
-hostname: "{{ ansible_hostname }}"

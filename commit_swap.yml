@@ -13,6 +13,7 @@
     runc: v1.3.1
     containerd: 2.1.4
     crictl: v1.34.0
+    k8s_version: 1.34
     # 设置构架
     architecture: amd64
     # 设置代理变量
@@ -236,7 +237,7 @@
 
     - name: 复制配置文件到节点
       copy:
-        src: http-proxy.conf
+        src: http-proxy.conf.j2
         dest: /etc/systemd/system/containerd.service.d/
         owner: root
         group: root
@@ -252,7 +253,7 @@
     # 安装版本在repo中指定，指定那版本后续安装就是那个版本。
     - name: copy k8s repo to /etc/yum.repos.d/
       copy:
-        src: k8s.repo
+        src: k8s.repoi.j2
         dest: /etc/yum.repos.d/k8s.repo
       
     - name: 下载k8s软件包

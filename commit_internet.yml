@@ -232,7 +232,7 @@
     - name: 下kube-flannel文件
       get_url:
         url: https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-        dest: /tmp/
+        dest: /root/
       when: "'master' in group_names"
 
     - name: 添加kubectl、kubeadm自动补全

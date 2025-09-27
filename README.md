@@ -2,7 +2,7 @@
 Ansible For K8s
 
 ### 介绍
-  这是一个ansible学习项目，通过ansible部署k8s的环境。基本条件是拥有目标机器的普通用户ssh权限和sudo权限。只需在剧本中指定变量值，无序修改其他文件。运行结束后使用kubeadm初始化集群，无序额外配置仓库。用最快的速度拉起一套集群。
+  这是一个ansible学习项目，通过ansible部署k8s的环境。基本条件是拥有目标机器的普通用户ssh权限和sudo权限。只需在剧本中指定变量值，无序修改其他文件。运行结束后使用kubeadm初始化集群，无须额外配置仓库，flannel插件放置在/root/下。
 
 ### 使用
 
@@ -30,7 +30,7 @@ ansible_become_method=su
 *** if you don't need proxy, go "安装ansible和模块"***
 
 这个环境可以在内网部署，联网部分使用socks代理链接到互联网
-1：socks代理
+
 如果网络链接状良好，可以取消这一部分
 
 ###### 3： 安装ansible和模块
@@ -58,6 +58,18 @@ ansible-ploybook --syntax-check commit_swap.yml
 ansible-playbook commit_swap.yml
 # no proxy
 ansible-playbook commit_internet.yml
+```
+
+##### 7: 初始化集群
+```shell
+# 在master节点执行
+kubeadm init --apiserver-advertise-address=192.168.1.2 --pod-network-cidr="10.244.0.0/16" --cri-socket=unix:///var/run/containerd/containerd.sock
+```
+
+##### 8: 安装flannel插件
+```shell
+# 在master节点执行
+kubectl apply -f /root/kube-flannel.yml
 ```
 
 
